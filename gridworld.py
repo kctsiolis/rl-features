@@ -7,6 +7,7 @@ class GridEnv():
     def __init__(self, dim=2, length=10, num_modes=2, eps=0):
         self.dim = dim 
         self.length = length #Side length of grid (all sides of equal length)
+        self.num_states = self.length**self.dim
         self.num_modes = num_modes #Number of modes (Gaussians) in reward function
 
         self.means = np.random.uniform(low=0, high=self.length, size=(self.num_modes, self.dim))
@@ -43,6 +44,21 @@ class GridEnv():
         self.state[action // 2] += dir
 
         return self.state
+
+    #Hash the state to a (less semantically meaningful) integer
+    def hash_state(self, state):
+        hash = 0
+        for i in range(self.dim):
+            hash += (self.length**i) * state[i]
+
+        return hash
+
+    def unhash_state(self, hash):
+        state = torch.zeros(self.dim)
+        for i in range(self.dim):
+            hash, state[i] = divmod(hash, self.length)
+
+        return state
 
     #Collect tuples x_t = (s_t, a_t, s_{t+1}) with an agent's policy
     def explore(self, agent, batch_size):
